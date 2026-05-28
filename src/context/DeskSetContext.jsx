@@ -301,11 +301,14 @@ export const DeskSetProvider = ({ children }) => {
     setRole('consumer');
     setActivePage('consumer-home');
     showToast("로그아웃되었습니다.");
-    if (window.location.hash === '#/admin' || window.location.hash === '#admin') {
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    if (isGitHubPages) {
       window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (window.location.pathname.endsWith('/admin') || window.location.pathname.endsWith('/admin/')) {
-      const newPath = window.location.pathname.replace(/\/admin\/?$/, '');
-      window.history.replaceState({}, document.title, newPath || '/');
+    } else {
+      if (window.location.pathname.endsWith('/admin') || window.location.pathname.endsWith('/admin/')) {
+        const newPath = window.location.pathname.replace(/\/admin\/?$/, '');
+        window.history.replaceState({}, document.title, newPath || '/');
+      }
     }
   };
 
@@ -313,22 +316,25 @@ export const DeskSetProvider = ({ children }) => {
   const switchRole = (newRole) => {
     setRole(newRole);
     setHistory([]);
+    const isGitHubPages = window.location.hostname.includes('github.io');
     if (newRole === 'seller') {
       setSellerPage('seller-dashboard');
     } else if (newRole === 'admin') {
       setAdminPage('admin-dashboard');
-      if (window.location.hash.startsWith('#')) {
+      if (isGitHubPages) {
         window.location.hash = '#/admin';
       } else {
-        window.history.pushState({}, document.title, window.location.origin + '/admin');
+        window.history.pushState({}, document.title, '/admin');
       }
     } else {
       setActivePage('consumer-home');
-      if (window.location.hash === '#/admin' || window.location.hash === '#admin') {
+      if (isGitHubPages) {
         window.history.replaceState({}, document.title, window.location.pathname);
-      } else if (window.location.pathname.endsWith('/admin') || window.location.pathname.endsWith('/admin/')) {
-        const newPath = window.location.pathname.replace(/\/admin\/?$/, '');
-        window.history.replaceState({}, document.title, newPath || '/');
+      } else {
+        if (window.location.pathname.endsWith('/admin') || window.location.pathname.endsWith('/admin/')) {
+          const newPath = window.location.pathname.replace(/\/admin\/?$/, '');
+          window.history.replaceState({}, document.title, newPath || '/');
+        }
       }
     }
   };
