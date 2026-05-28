@@ -5,9 +5,35 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DeskSet — 데스크테리어 전문 쇼핑몰</title>
+    <!-- SPA Github Pages Redirect Handler -->
+    <script type="text/javascript">
+      // Single Page Apps for GitHub Pages
+      // MIT License
+      // https://github.com/rafgraph/spa-github-pages
+      // This script checks to see if a redirect is present in the query string,
+      // and converts it back into the correct URL path before rendering the app.
+      (function(l) {
+        if (l.search[1] === 'p' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&') 
+          }).reduce(function(r, s) {
+            var a = s.split('=');
+            r[a[0]] = a[1];
+            return r;
+          }, {});
+          if (decoded.p !== undefined) {
+            window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + (decoded.p ? '/' + decoded.p : '') +
+              (decoded.q ? '?' + decoded.q : '') +
+              l.hash
+            );
+          }
+        }
+      }(window.location));
+    </script>
     <!-- Toss Payments SDK -->
     <script src="https://js.tosspayments.com/v2/standard"></script>
-    <script type="module" crossorigin src="./assets/index-D_iNG_4D.js"></script>
+    <script type="module" crossorigin src="./assets/index-Da_xZzzG.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-C2kaZ0pj.css">
   </head>
   <body>
