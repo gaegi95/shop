@@ -254,27 +254,7 @@ export const DeskSetProvider = ({ children }) => {
     localStorage.setItem('ds_role', role);
   }, [role]);
 
-  useEffect(() => {
-    const handleUrlRouting = () => {
-      const path = window.location.pathname;
-      const hash = window.location.hash;
-      const isAdminPath = path.endsWith('/admin') || path.endsWith('/admin/') || hash === '#/admin' || hash === '#admin';
-      
-      if (isAdminPath) {
-        if (!currentUser || currentUser.role !== 'admin') {
-          setRole('admin');
-          setAdminPage('admin-login');
-        } else {
-          setRole('admin');
-          setAdminPage('admin-dashboard');
-        }
-      }
-    };
-    
-    handleUrlRouting();
-    window.addEventListener('hashchange', handleUrlRouting);
-    return () => window.removeEventListener('hashchange', handleUrlRouting);
-  }, [currentUser]);
+  // URL routing is now handled by react-router-dom inside RouteSyncer in App.jsx
   
   const [currentProductId, setCurrentProductId] = useState(1);
   const [selectedColor, setSelectedColor] = useState("#1E293B");
@@ -301,10 +281,6 @@ export const DeskSetProvider = ({ children }) => {
     setRole('consumer');
     setActivePage('consumer-home');
     showToast("로그아웃되었습니다.");
-    if (window.location.pathname.endsWith('/admin') || window.location.pathname.endsWith('/admin/')) {
-      const newPath = window.location.pathname.replace(/\/admin\/?$/, '');
-      window.history.replaceState({}, document.title, newPath || '/');
-    }
   };
 
   // 4. ROUTER HANDLERS
@@ -315,15 +291,8 @@ export const DeskSetProvider = ({ children }) => {
       setSellerPage('seller-dashboard');
     } else if (newRole === 'admin') {
       setAdminPage('admin-dashboard');
-      // Push subfolder-safe pathname e.g. /shop/admin or /admin
-      const basePath = window.location.pathname.replace(/\/admin\/?$/, '').replace(/\/$/, '');
-      window.history.pushState({}, document.title, basePath + '/admin');
     } else {
       setActivePage('consumer-home');
-      if (window.location.pathname.endsWith('/admin') || window.location.pathname.endsWith('/admin/')) {
-        const newPath = window.location.pathname.replace(/\/admin\/?$/, '');
-        window.history.replaceState({}, document.title, newPath || '/');
-      }
     }
   };
 
@@ -690,11 +659,11 @@ export const DeskSetProvider = ({ children }) => {
       notices, setNotices,
       faqs, setFaqs,
       
-      role, switchRole,
-      activePage, showPage, goBack,
+      role, switchRole, setRole,
+      activePage, showPage, setActivePage, goBack,
       currentUser, setCurrentUser, logout,
-      sellerPage, showSellerPage,
-      adminPage, showAdminPage,
+      sellerPage, showSellerPage, setSellerPage,
+      adminPage, showAdminPage, setAdminPage,
       
       currentProductId, setCurrentProductId,
       selectedColor, setSelectedColor,

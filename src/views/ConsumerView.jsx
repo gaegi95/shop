@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { DeskSetContext } from '../context/DeskSetContext';
 import ProductCard from '../components/ui/ProductCard';
 import SkeletonCard from '../components/ui/SkeletonCard';
@@ -107,6 +107,90 @@ const ConsumerView = () => {
       setLoginError('로그인 실패: 아이디나 비밀번호를 확인하세요.');
     }
   };
+
+  // ------------------ SNS LOGIN INTEGRATION ------------------
+  useEffect(() => {
+    const loadNaverScript = () => {
+      if (window.naver) return Promise.resolve();
+      return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = 'https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js';
+        script.charset = 'utf-8';
+        script.onload = () => resolve();
+        document.head.appendChild(script);
+      });
+    };
+
+    loadNaverScript().then(() => {
+      // ⚠️ 여기에 본인의 Naver Client ID를 입력하세요.
+      // (테스트용 예시 키: "fexzK_E5pPhm_LzG4WpS")
+      const clientId = "fexzK_E5pPhm_LzG4WpS"; 
+      const callbackUrl = window.location.origin + (window.location.pathname.startsWith('/shop') ? '/shop/login' : '/login');
+
+      const naverLogin = new window.naver.LoginWithNaverId({
+        clientId: clientId,
+        callbackUrl: callbackUrl,
+        isPopup: false,
+        loginButton: { color: "green", type: 3, height: 60 }
+      });
+      naverLogin.init();
+
+      // 로그인 성공 후 리다이렉트되어 돌아왔을 때 토큰 처리
+      if (window.location.hash.includes('access_token')) {
+        naverLogin.getLoginStatus((status) => {
+          if (status) {
+            const email = naverLogin.user.getEmail();
+            const name = naverLogin.user.getName() || "네이버 회원";
+            const profileImage = naverLogin.user.getProfileImage() || "";
+
+            const userObj = {
+              id: email || `naver_${Date.now()}`,
+              name: name,
+              email: email || "",
+              profileImage: profileImage,
+              role: 'user',
+              provider: 'naver'
+            };
+
+            setCurrentUser(userObj);
+            showToast(`${name}님, 네이버 로그인 성공!`);
+            showPage('consumer-home');
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        });
+      }
+    }).catch(err => console.error("Naver SDK load failed", err));
+  }, [activePage]);
+
+  const handleNaverLoginClick = () => {
+    if (!window.naver) {
+      showToast("네이버 로그인 SDK를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
+      return;
+    }
+    const naverAuthBtn = document.getElementById('naverIdLogin')?.querySelector('a');
+    if (naverAuthBtn) {
+      naverAuthBtn.click();
+    } else {
+      showToast("네이버 로그인 버튼을 초기화하는 중입니다. 다시 시도해 주세요.");
+    }
+  };
+
+  const handleMockSnsLogin = (provider) => {
+    showToast(`${provider} 로그인 시뮬레이션을 진행합니다...`);
+    setTimeout(() => {
+      const mockUserObj = {
+        id: `${provider.toLowerCase()}_${Date.now()}`,
+        name: `${provider} 테스트회원`,
+        email: `${provider.toLowerCase()}@mockmail.com`,
+        role: 'user',
+        provider: provider.toLowerCase()
+      };
+      setCurrentUser(mockUserObj);
+      showToast(`${mockUserObj.name}님, ${provider} 로그인 완료!`);
+      showPage('consumer-home');
+    }, 1000);
+  };
+  // -----------------------------------------------------------
 
   // Compute Cart count
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -310,12 +394,107 @@ const ConsumerView = () => {
 
               <button type="submit" className="btn-buy full-width" style={{ marginTop: '0.5rem', padding: '12px' }}>로그인</button>
             </form>
+
+            {/* SNS Logins Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0 1rem', color: '#94A3B8', fontSize: '13px' }}>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }}></div>
+              <span style={{ padding: '0 10px', fontSize: '11px', fontWeight: 600 }}>간편 SNS 로그인</span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }}></div>
+            </div>
+
+            {/* SNS Login Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {/* Naver Button */}
+              <button 
+                type="button" 
+                onClick={handleNaverLoginClick}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '10px', 
+                  width: '100%', 
+                  padding: '12px', 
+                  borderRadius: '10px', 
+                  border: 'none', 
+                  background: '#03C75A', 
+                  color: 'white', 
+                  fontWeight: 600, 
+                  fontSize: '13px', 
+                  cursor: 'pointer',
+                  transition: 'opacity 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.opacity = 0.9}
+                onMouseOut={(e) => e.currentTarget.style.opacity = 1}
+              >
+                <span style={{ fontSize: '14px', fontWeight: 900 }}>N</span> 네이버로 로그인하기
+              </button>
+
+              {/* Kakao Button (Mocked) */}
+              <button 
+                type="button" 
+                onClick={() => handleMockSnsLogin('Kakao')}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '10px', 
+                  width: '100%', 
+                  padding: '12px', 
+                  borderRadius: '10px', 
+                  border: 'none', 
+                  background: '#FEE500', 
+                  color: '#191919', 
+                  fontWeight: 600, 
+                  fontSize: '13px', 
+                  cursor: 'pointer',
+                  transition: 'opacity 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.opacity = 0.9}
+                onMouseOut={(e) => e.currentTarget.style.opacity = 1}
+              >
+                <span style={{ fontSize: '14px' }}>💬</span> 카카오로 로그인하기
+              </button>
+
+              {/* Google Button (Mocked) */}
+              <button 
+                type="button" 
+                onClick={() => handleMockSnsLogin('Google')}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '10px', 
+                  width: '100%', 
+                  padding: '12px', 
+                  borderRadius: '10px', 
+                  border: '1px solid #E2E8F0', 
+                  background: 'white', 
+                  color: '#475569', 
+                  fontWeight: 600, 
+                  fontSize: '13px', 
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" style={{ display: 'block' }}>
+                  <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.68 1.54 14.98 1 12 1 7.35 1 3.37 3.65 1.4 7.56l3.85 2.99c.95-2.85 3.6-5.51 6.75-5.51z"/>
+                  <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58l3.7 2.87c2.16-2 3.72-4.94 3.72-8.69z"/>
+                  <path fill="#FBBC05" d="M5.25 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29L1.4 7.02C.5 8.81 0 10.81 0 12.98s.5 4.17 1.4 5.96l3.85-2.99-.02.03z"/>
+                  <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.7-2.87c-1.03.69-2.35 1.11-4.26 1.11-3.15 0-5.8-2.66-6.75-5.51l-3.85 2.99C3.37 20.35 7.35 23 12 23z"/>
+                </svg>
+                구글로 로그인하기
+              </button>
+            </div>
+
+            {/* Hidden actual Naver SDK button trigger */}
+            <div id="naverIdLogin" style={{ display: 'none' }}></div>
             
-            <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '12px', color: '#94A3B8', lineHeight: 1.5 }}>
+            <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '11px', color: '#94A3B8', lineHeight: 1.5, borderTop: '1px dashed #E2E8F0', paddingTop: '1rem' }}>
               프로토타입 계정 안내:<br />
-              <strong>시스템 관리자</strong>: admin / admin<br />
-              <strong>입점사 파트너</strong>: company / company<br />
-              <strong>일반 사용자</strong>: user / user
+              <strong>시스템 관리자</strong>: admin / admin &nbsp;&nbsp;|&nbsp;&nbsp; <strong>일반 사용자</strong>: user / user
             </div>
           </div>
         </div>
